@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RoadRescue — Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#080909;--bg2:#0f1011;--bg3:#161718;--border:#1f2122;--amber:#f59e0b;--amber2:#fbbf24;--red:#ef4444;--green:#22c55e;--blue:#3b82f6;--purple:#8b5cf6;--text:#e8eaf0;--muted:#6b7280;--card:#0d0e0f;--sidebar:#0a0b0b;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.4;}
+    ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+    .layout{display:flex;min-height:100vh;}
+    /* SIDEBAR */
+    .sidebar{width:230px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50;}
+    .sidebar-brand{padding:1.4rem 1.2rem;border-bottom:1px solid var(--border);}
+    .brand-logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--amber);}
+    .brand-logo span{color:var(--text);}
+    .brand-tag{font-size:0.62rem;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:0.2rem;}
+    .sidebar-nav{flex:1;padding:1rem 0.8rem;display:flex;flex-direction:column;gap:0.2rem;overflow-y:auto;}
+    .nav-section-label{font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;font-family:'JetBrains Mono',monospace;padding:0.6rem 0.6rem 0.3rem;margin-top:0.5rem;}
+    .nav-item{display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0.8rem;border-radius:8px;cursor:pointer;transition:all 0.18s;font-size:0.875rem;color:var(--muted);border:1px solid transparent;}
+    .nav-item:hover{background:var(--bg3);color:var(--text);}
+    .nav-item.active{background:rgba(245,158,11,0.1);color:var(--amber);border-color:rgba(245,158,11,0.2);}
+    .nav-icon{font-size:0.95rem;width:18px;text-align:center;flex-shrink:0;}
+    .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:0.6rem;padding:0.15rem 0.45rem;border-radius:999px;font-weight:700;}
+    .sidebar-footer{padding:1rem;border-top:1px solid var(--border);}
+    .admin-chip{display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0.8rem;border-radius:8px;background:var(--bg3);border:1px solid var(--border);}
+    .admin-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--amber),#d97706);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#000;flex-shrink:0;}
+    .admin-name{font-size:0.8rem;font-weight:600;}
+    .admin-role{font-size:0.65rem;color:var(--muted);}
+    /* MAIN */
+    .main{margin-left:230px;flex:1;display:flex;flex-direction:column;}
+    /* TOPBAR */
+    .topbar{height:60px;background:rgba(8,9,9,0.95);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.8rem;position:sticky;top:0;z-index:40;backdrop-filter:blur(12px);}
+    .page-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;}
+    .breadcrumb{font-size:0.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+    .topbar-right{display:flex;align-items:center;gap:0.8rem;}
+    .topbar-btn{padding:0.4rem 0.9rem;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.18s;}
+    .topbar-btn:hover{border-color:var(--amber);color:var(--amber);}
+    .topbar-btn.primary{background:var(--amber);color:#000;border-color:var(--amber);font-weight:600;}
+    .topbar-btn.primary:hover{background:var(--amber2);}
+    .search-input{padding:0.5rem 0.9rem;border-radius:7px;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-size:0.82rem;width:220px;font-family:'DM Sans',sans-serif;outline:none;}
+    .search-input:focus{border-color:var(--amber);}
+    /* CONTENT */
+    .content{padding:1.6rem 1.8rem;flex:1;}
+    .panel{display:none;}
+    .panel.active{display:block;}
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;margin-bottom:1.5rem;}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.4rem;transition:border-color 0.2s;}
+    .stat-card:hover{border-color:rgba(245,158,11,0.3);}
+    .stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;}
+    .stat-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+    .stat-trend{font-size:0.72rem;font-family:'JetBrains Mono',monospace;}
+    .trend-up{color:var(--green);}
+    .trend-down{color:var(--red);}
+    .stat-val{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:1px;color:var(--amber);line-height:1;}
+    .stat-label{font-size:0.75rem;color:var(--muted);margin-top:0.3rem;text-transform:uppercase;letter-spacing:0.5px;}
+    /* CARDS */
+    .panel-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.2rem;}
+    .card-header{padding:0.9rem 1.3rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .card-title{font-weight:600;font-size:0.875rem;}
+    .card-body{padding:0;}
+    /* TABLE */
+    table{width:100%;border-collapse:collapse;}
+    thead tr{border-bottom:1px solid var(--border);}
+    th{padding:0.7rem 1.2rem;text-align:left;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;font-weight:400;}
+    tbody tr{border-bottom:1px solid rgba(31,33,34,0.6);transition:background 0.15s;}
+    tbody tr:last-child{border-bottom:none;}
+    tbody tr:hover{background:var(--bg3);}
+    td{padding:0.75rem 1.2rem;font-size:0.83rem;vertical-align:middle;}
+    /* BADGES */
+    .badge{padding:0.22rem 0.6rem;border-radius:999px;font-size:0.68rem;font-weight:600;font-family:'JetBrains Mono',monospace;display:inline-block;}
+    .badge-pending{background:rgba(245,158,11,0.15);color:var(--amber);}
+    .badge-active{background:rgba(34,197,94,0.15);color:var(--green);}
+    .badge-done{background:rgba(107,114,128,0.15);color:var(--muted);}
+    .badge-red{background:rgba(239,68,68,0.15);color:var(--red);}
+    .badge-blue{background:rgba(59,130,246,0.15);color:var(--blue);}
+    .badge-purple{background:rgba(139,92,246,0.15);color:var(--purple);}
+    /* BUTTONS */
+    .action-btn{padding:0.28rem 0.65rem;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;margin-right:0.3rem;}
+    .action-btn:hover{border-color:var(--amber);color:var(--amber);}
+    .action-btn.danger:hover{border-color:var(--red);color:var(--red);}
+    .action-btn.success:hover{border-color:var(--green);color:var(--green);}
+    .btn-primary{background:var(--amber);color:#000;border:none;border-radius:8px;padding:0.7rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:0.875rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+    .btn-primary:hover{background:var(--amber2);}
+    .btn-secondary{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:0.7rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:0.875rem;cursor:pointer;transition:all 0.2s;}
+    .btn-secondary:hover{border-color:var(--amber);color:var(--amber);}
+    /* CHARTS */
+    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem;}
+    .bar-chart-wrap{display:flex;align-items:flex-end;gap:0.4rem;height:90px;padding:0 0.2rem;}
+    .bar{flex:1;border-radius:4px 4px 0 0;min-height:4px;background:linear-gradient(to top,var(--amber),rgba(245,158,11,0.4));cursor:pointer;transition:opacity 0.15s;}
+    .bar:hover{opacity:0.8;}
+    .bar-labels{display:flex;gap:0.4rem;margin-top:0.4rem;}
+    .bar-lbl{flex:1;text-align:center;font-size:0.62rem;color:var(--muted);}
+    .donut-wrap{display:flex;align-items:center;gap:1.5rem;}
+    .donut-legend{display:flex;flex-direction:column;gap:0.5rem;}
+    .legend-item{display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;}
+    .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    /* FORM */
+    input,select,textarea{background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;padding:0.6rem 0.9rem;outline:none;transition:border-color 0.2s;width:100%;}
+    input:focus,select:focus,textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,0.08);}
+    select option{background:var(--bg2);}
+    .form-group{margin-bottom:1rem;}
+    .form-label{font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem;display:block;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    /* MODAL */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+    .modal-overlay.open{display:flex;}
+    .modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:500px;animation:fadeUp 0.25s ease both;}
+    .modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;margin-bottom:0.3rem;}
+    .modal-sub{font-size:0.82rem;color:var(--muted);margin-bottom:1.5rem;}
+    .modal-footer{display:flex;gap:0.8rem;justify-content:flex-end;margin-top:1.5rem;}
+    /* TOAST */
+    .toast-container{position:fixed;top:1.2rem;right:1.2rem;z-index:9000;display:flex;flex-direction:column;gap:0.5rem;}
+    .toast{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1.1rem;min-width:260px;display:flex;align-items:flex-start;gap:0.7rem;animation:slideIn 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+    .toast.success{border-left:3px solid var(--green);}
+    .toast.warning{border-left:3px solid var(--amber);}
+    .toast.error{border-left:3px solid var(--red);}
+    .toast.info{border-left:3px solid var(--blue);}
+    .toast-title{font-weight:600;font-size:0.82rem;}
+    .toast-msg{font-size:0.75rem;color:var(--muted);margin-top:0.15rem;}
+    .ml-score-pill{display:inline-flex;align-items:center;padding:0.2rem 0.55rem;border-radius:6px;background:rgba(34,197,94,0.1);color:var(--green);font-size:0.72rem;font-family:'JetBrains Mono',monospace;font-weight:600;}
+    .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.5s infinite;display:inline-block;}
+    .section-label{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--amber);text-transform:uppercase;letter-spacing:2px;margin-bottom:0.6rem;}
+    .avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;color:#000;flex-shrink:0;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="modal-overlay" id="mainModal">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">MODAL</div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="modalConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">🛣️ Road<span>Rescue</span></div>
+      <div class="brand-tag">Admin Control Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active" onclick="showPanel('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="showPanel('requests',this)"><span class="nav-icon">🆘</span> Service Requests<span class="nav-badge" id="pendingBadge">0</span></div>
+      <div class="nav-item" onclick="showPanel('users',this)"><span class="nav-icon">👥</span> Users</div>
+      <div class="nav-item" onclick="showPanel('providers',this)"><span class="nav-icon">🔧</span> Providers</div>
+      <div class="nav-section-label">Analytics</div>
+      <div class="nav-item" onclick="showPanel('ml',this)"><span class="nav-icon">🤖</span> ML Insights</div>
+      <div class="nav-item" onclick="showPanel('fraud',this)"><span class="nav-icon">🛡️</span> Fraud Log<span class="nav-badge">3</span></div>
+      <div class="nav-item" onclick="showPanel('payments',this)"><span class="nav-icon">💳</span> Payments</div>
+      <div class="nav-section-label">System</div>
+      <div class="nav-item" onclick="showPanel('notifications',this)"><span class="nav-icon">🔔</span> Send Notification</div>
+      <div class="nav-item" onclick="showPanel('settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
+      <div class="nav-item" onclick="window.open('index.html','_blank')"><span class="nav-icon">🌐</span> View Site</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-chip">
+        <div class="admin-avatar">SA</div>
+        <div><div class="admin-name">Super Admin</div><div class="admin-role">admin@roadrescue.com</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <div class="page-title" id="topbarTitle">DASHBOARD</div>
+        <div class="breadcrumb">Admin → <span id="topbarCrumb">Overview</span></div>
+      </div>
+      <div class="topbar-right">
+        <input class="search-input" type="text" placeholder="🔍 Search..."/>
+        <button class="topbar-btn primary" onclick="showPanel('requests',null)">+ New Request</button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">🆘</div><span class="stat-trend trend-up">↑ 12%</span></div><div class="stat-val" id="s-requests">247</div><div class="stat-label">Total Requests</div></div>
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(34,197,94,0.12)">✅</div><span class="stat-trend trend-up">↑ 8%</span></div><div class="stat-val" id="s-completed">198</div><div class="stat-label">Completed</div></div>
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(59,130,246,0.12)">👥</div><span class="stat-trend trend-up">↑ 24</span></div><div class="stat-val">1,842</div><div class="stat-label">Registered Users</div></div>
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(139,92,246,0.12)">🔧</div><span class="stat-trend trend-up">↑ 5</span></div><div class="stat-val">128</div><div class="stat-label">Active Providers</div></div>
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(34,197,94,0.12)">💰</div><span class="stat-trend trend-up">↑ 18%</span></div><div class="stat-val">₦2.4M</div><div class="stat-label">Revenue This Month</div></div>
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(239,68,68,0.12)">🛡️</div><span class="stat-trend trend-down">3 open</span></div><div class="stat-val" style="color:var(--red)">3</div><div class="stat-label">Fraud Alerts</div></div>
+        </div>
+        <div class="charts-grid">
+          <div class="panel-card">
+            <div class="card-header"><span class="card-title">📈 Requests — Last 7 Days</span></div>
+            <div style="padding:1.2rem"><div class="bar-chart-wrap" id="reqChart"></div><div class="bar-labels" id="reqLabels"></div></div>
+          </div>
+          <div class="panel-card">
+            <div class="card-header"><span class="card-title">🥧 Request Types</span></div>
+            <div style="padding:1.2rem">
+              <div class="donut-wrap">
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--border)" stroke-width="14"/>
+                  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--amber)" stroke-width="14" stroke-dasharray="132 88" stroke-dashoffset="-22"/>
+                  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--blue)" stroke-width="14" stroke-dasharray="88 132" stroke-dashoffset="110"/>
+                </svg>
+                <div class="donut-legend">
+                  <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Fuel Delivery — 60%</div>
+                  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Mechanic — 40%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-card">
+          <div class="card-header"><span class="card-title">⏳ Pending Requests</span><div style="display:flex;align-items:center;gap:0.5rem"><span class="live-dot"></span><span style="font-size:0.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace">LIVE</span></div></div>
+          <div class="card-body" id="pendingList"></div>
+        </div>
+        <div class="panel-card">
+          <div class="card-header"><span class="card-title">🕐 Recent Activity</span></div>
+          <div class="card-body" id="activityList"></div>
+        </div>
+      </div>
+
+      <!-- REQUESTS -->
+      <div class="panel" id="panel-requests">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+          <div><div class="section-label">Service Requests</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px">ALL REQUESTS</div></div>
+          <div style="display:flex;gap:0.6rem">
+            <select style="width:auto;padding:0.5rem 0.8rem;font-size:0.8rem" id="reqFilter" onchange="loadRequests()"><option value="all">All Status</option><option value="pending">Pending</option><option value="en_route">En Route</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+            <select style="width:auto;padding:0.5rem 0.8rem;font-size:0.8rem" id="svcFilter" onchange="loadRequests()"><option value="all">All Types</option><option value="fuel_delivery">Fuel Delivery</option><option value="mechanic">Mechanic</option></select>
+          </div>
+        </div>
+        <div class="panel-card"><div class="card-body"><table><thead><tr><th>ID</th><th>Customer</th><th>Type</th><th>Location</th><th>Provider</th><th>ETA</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="reqTable"></tbody></table></div></div>
+      </div>
+
+      <!-- USERS -->
+      <div class="panel" id="panel-users">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+          <div><div class="section-label">User Management</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px">ALL USERS</div></div>
+          <button class="btn-primary" onclick="openAddUser()">+ Add User</button>
+        </div>
+        <div class="panel-card"><div class="card-body"><table><thead><tr><th>User</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead><tbody id="usersTable"></tbody></table></div></div>
+      </div>
+
+      <!-- PROVIDERS -->
+      <div class="panel" id="panel-providers">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+          <div><div class="section-label">Provider Management</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px">SERVICE PROVIDERS</div></div>
+        </div>
+        <div class="panel-card"><div class="card-body"><table><thead><tr><th>Provider</th><th>Type</th><th>License</th><th>ML Score</th><th>Rating</th><th>Rescues</th><th>Status</th><th>Actions</th></tr></thead><tbody id="providersTable"></tbody></table></div></div>
+      </div>
+
+      <!-- ML -->
+      <div class="panel" id="panel-ml">
+        <div class="section-label">Machine Learning</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;margin-bottom:1.2rem">ML ANALYTICS</div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(34,197,94,0.12)">⏱️</div></div><div class="stat-val">96.2%</div><div class="stat-label">ETA Accuracy</div></div>
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">🎯</div></div><div class="stat-val">91.8%</div><div class="stat-label">Dispatch Match</div></div>
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(59,130,246,0.12)">💰</div></div><div class="stat-val" style="color:var(--green)">₦840K</div><div class="stat-label">User Savings</div></div>
+          <div class="stat-card"><div class="stat-top"><div class="stat-icon" style="background:rgba(239,68,68,0.12)">🛡️</div></div><div class="stat-val" style="color:var(--red)">12</div><div class="stat-label">Frauds Caught</div></div>
+        </div>
+        <div class="panel-card"><div class="card-header"><span class="card-title">🤖 Active ML Models</span><span class="badge badge-active">ALL LIVE</span></div><div class="card-body"><table><thead><tr><th>Model</th><th>Algorithm</th><th>Accuracy</th><th>Last Trained</th><th>Status</th></tr></thead><tbody id="mlTable"></tbody></table></div></div>
+        <div class="panel-card"><div class="card-header"><span class="card-title">📈 Weekly Demand Forecast</span></div><div style="padding:1.2rem"><div class="bar-chart-wrap" id="demandChart" style="height:110px"></div><div class="bar-labels" id="demandLabels"></div></div></div>
+      </div>
+
+      <!-- FRAUD -->
+      <div class="panel" id="panel-fraud">
+        <div class="section-label">Security</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;margin-bottom:1.2rem">FRAUD & ANOMALY LOG</div>
+        <div class="panel-card"><div class="card-body"><table><thead><tr><th>Provider</th><th>Type</th><th>Description</th><th>Severity</th><th>Detected</th><th>Status</th><th>Actions</th></tr></thead><tbody id="fraudTable"></tbody></table></div></div>
+      </div>
+
+      <!-- PAYMENTS -->
+      <div class="panel" id="panel-payments">
+        <div class="section-label">Finance</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;margin-bottom:1.2rem">PAYMENTS</div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card"><div class="stat-val" style="color:var(--green)">₦2.4M</div><div class="stat-label">This Month</div></div>
+          <div class="stat-card"><div class="stat-val">₦18.7M</div><div class="stat-label">Total Revenue</div></div>
+          <div class="stat-card"><div class="stat-val" style="color:var(--red)">₦84K</div><div class="stat-label">Pending</div></div>
+        </div>
+        <div class="panel-card"><div class="card-body"><table><thead><tr><th>ID</th><th>Customer</th><th>Provider</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th></tr></thead><tbody id="paymentsTable"></tbody></table></div></div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="panel" id="panel-notifications">
+        <div class="section-label">Communications</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;margin-bottom:1.2rem">SEND NOTIFICATION</div>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1.2rem">
+          <div class="panel-card">
+            <div class="card-header"><span class="card-title">📢 Broadcast Message</span></div>
+            <div style="padding:1.4rem">
+              <div class="form-group"><label class="form-label">Recipients</label><select id="notifTo"><option value="all">All Users</option><option value="customers">Customers Only</option><option value="providers">Providers Only</option></select></div>
+              <div class="form-group"><label class="form-label">Type</label><select id="notifType"><option value="alert">Alert</option><option value="ml_insight">ML Insight</option><option value="status">Status Update</option></select></div>
+              <div class="form-group"><label class="form-label">Title</label><input type="text" id="notifTitle" placeholder="Notification title..."/></div>
+              <div class="form-group"><label class="form-label">Message</label><textarea id="notifMsg" rows="4" placeholder="Write your message here..."></textarea></div>
+              <div style="display:flex;gap:0.8rem">
+                <button class="btn-primary" onclick="sendNotif()">📤 Send Now</button>
+                <button class="btn-secondary" onclick="previewNotif()">👁️ Preview</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel-card">
+            <div class="card-header"><span class="card-title">📋 Recent Broadcasts</span></div>
+            <div style="padding:1rem" id="broadcastLog"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="panel" id="panel-settings">
+        <div class="section-label">Configuration</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;margin-bottom:1.2rem">SYSTEM SETTINGS</div>
+        <div style="max-width:600px;display:flex;flex-direction:column;gap:1.2rem">
+          <div class="panel-card">
+            <div class="card-header"><span class="card-title">🔧 General Settings</span></div>
+            <div style="padding:1.4rem">
+              <div class="form-row"><div class="form-group"><label class="form-label">Platform Name</label><input type="text" value="RoadRescue"/></div><div class="form-group"><label class="form-label">Support Email</label><input type="email" value="support@roadrescue.com"/></div></div>
+              <div class="form-group"><label class="form-label">Max Service Radius (km)</label><input type="number" value="20"/></div>
+              <button class="btn-primary" onclick="showToast('success','✅ Saved','Settings updated.')">Save Settings</button>
+            </div>
+          </div>
+          <div class="panel-card">
+            <div class="card-header"><span class="card-title">🤖 ML Configuration</span></div>
+            <div style="padding:1.4rem">
+              <div class="form-group"><label class="form-label">Pricing Mode</label><select><option>Dynamic (RL-optimized)</option><option>Fixed rates</option></select></div>
+              <div class="form-group"><label class="form-label">Surge Pricing Cap (%)</label><input type="number" value="40"/></div>
+              <div class="form-group"><label class="form-label">ML Retraining Frequency</label><select><option>Every 24 hours</option><option>Every 12 hours</option><option>Weekly</option></select></div>
+              <button class="btn-primary" onclick="showToast('success','🤖 ML Updated','ML configuration saved.')">Save ML Config</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE_URL = 'http://localhost:5000/api';
+
+  async function api(method, path, body=null){
+    try{
+      const res = await fetch(BASE_URL+path,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('rr_token')||'')},body:body?JSON.stringify(body):null});
+      return await res.json();
+    }catch{return null;}
+  }
+
+  const titles = {dashboard:'Dashboard',requests:'Service Requests',users:'Users',providers:'Providers',ml:'ML Insights',fraud:'Fraud Log',payments:'Payments',notifications:'Notifications',settings:'Settings'};
+  const loaders = {requests:loadRequests,users:loadUsers,providers:loadProviders,ml:loadML,fraud:loadFraud,payments:loadPayments};
+
+  function showPanel(name, el){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    if(el) el.classList.add('active');
+    document.getElementById('topbarTitle').textContent=(titles[name]||name).toUpperCase();
+    document.getElementById('topbarCrumb').textContent=titles[name]||name;
+    if(loaders[name]) loaders[name]();
+  }
+
+  // DEMO DATA
+  const demoReqs=[
+    {id:1,customer:'Alex Johnson', type:'fuel_delivery',address:'Highway 45',   provider:'Chukwudi Auto',eta:11,price:'₦3,200',status:'pending'},
+    {id:2,customer:'Amina Bello',  type:'mechanic',     address:'Lekki Phase 1',provider:'Adeola Tech',  eta:14,price:'₦5,500',status:'en_route'},
+    {id:3,customer:'Emeka Okafor', type:'fuel_delivery',address:'Ring Road',    provider:'QuickFuel',   eta:8, price:'₦2,800',status:'completed'},
+    {id:4,customer:'Fatima Yusuf', type:'mechanic',     address:'Airport Rd',   provider:'—',           eta:12,price:'₦4,100',status:'pending'},
+    {id:5,customer:'Chidi Nwankwo',type:'fuel_delivery',address:'VI Expressway',provider:'QuickFuel',   eta:9, price:'₦3,600',status:'cancelled'},
+  ];
+  const demoUsers=[
+    {name:'Alex Johnson', email:'alex@example.com', phone:'+234 812 111',role:'customer',    joined:'Jan 12, 2025',active:true},
+    {name:'Amina Bello',  email:'amina@example.com',phone:'+234 812 222',role:'customer',    joined:'Feb 3, 2025', active:true},
+    {name:'Chukwudi Obi', email:'chuk@example.com', phone:'+234 812 333',role:'mechanic',    joined:'Mar 8, 2025', active:true},
+    {name:'QuickFuel Ltd',email:'fuel@example.com', phone:'+234 812 444',role:'fuel_station',joined:'Jan 20, 2025',active:true},
+    {name:'Tunde Adams',  email:'tunde@example.com',phone:'+234 812 555',role:'customer',    joined:'Apr 2, 2025', active:false},
+  ];
+  const demoProviders=[
+    {name:'Chukwudi Auto Services',type:'mechanic',    license:'LAG-M-0021',score:97,rating:4.9,rescues:143,approved:true},
+    {name:'QuickFuel Express',     type:'fuel_station',license:'LAG-F-0089',score:83,rating:4.6,rescues:98, approved:true},
+    {name:'Adeola Road Tech',      type:'mechanic',    license:'LAG-M-0044',score:71,rating:4.4,rescues:76, approved:true},
+    {name:'FastFix Lagos',         type:'mechanic',    license:'LAG-M-0102',score:45,rating:3.1,rescues:22, approved:false},
+    {name:'SunFuel Services',      type:'fuel_station',license:'LAG-F-0117',score:60,rating:4.0,rescues:31, approved:false},
+  ];
+  const demoFraud=[
+    {provider:'FastFix Lagos',type:'overcharging',    desc:'Charged 2× estimated price',        severity:'high',  date:'Oct 8', status:'open'},
+    {provider:'Anonymous',   type:'fake_completion', desc:'Service marked done before arrival', severity:'high',  date:'Sep 20',status:'under_review'},
+    {provider:'SunFuel Srv', type:'review_bot',       desc:'NLP detected fake 5-star reviews',  severity:'medium',date:'Sep 5', status:'resolved'},
+  ];
+  const demoPayments=[
+    {id:'PAY-001',customer:'Alex Johnson', provider:'Chukwudi Auto',amount:'₦3,200',method:'Cash',    date:'Oct 14',status:'completed'},
+    {id:'PAY-002',customer:'Amina Bello',  provider:'Adeola Tech',  amount:'₦5,500',method:'Card',    date:'Oct 10',status:'completed'},
+    {id:'PAY-003',customer:'Emeka Okafor', provider:'QuickFuel',    amount:'₦2,800',method:'Transfer',date:'Sep 28',status:'pending'},
+    {id:'PAY-004',customer:'Fatima Yusuf', provider:'—',            amount:'₦4,100',method:'Cash',    date:'Sep 15',status:'pending'},
+  ];
+  const mlModels=[
+    {name:'Provider Dispatch (RL)',  algo:'Reinforcement Learning',   acc:'91.8%',trained:'2 hrs ago'},
+    {name:'ETA Prediction',         algo:'Regression (Random Forest)',acc:'96.2%',trained:'6 hrs ago'},
+    {name:'Dynamic Pricing',        algo:'Reinforcement Learning',   acc:'94.1%',trained:'6 hrs ago'},
+    {name:'Demand Forecasting',     algo:'Time-Series (LSTM)',        acc:'88.5%',trained:'24 hrs ago'},
+    {name:'Fraud Detection',        algo:'Isolation Forest',          acc:'97.3%',trained:'12 hrs ago'},
+    {name:'NLP Review Sentiment',   algo:'BERT Fine-tuned',           acc:'89.4%',trained:'1 day ago'},
+    {name:'Route Optimization',     algo:'Graph Neural Network',      acc:'92.7%',trained:'3 hrs ago'},
+  ];
+
+  function loadRequests(){
+    const sf=document.getElementById('reqFilter')?.value||'all';
+    const sv=document.getElementById('svcFilter')?.value||'all';
+    const data=demoReqs.filter(r=>(sf==='all'||r.status===sf)&&(sv==='all'||r.type===sv));
+    const sb={pending:'badge-pending',en_route:'badge-active',completed:'badge-done',cancelled:'badge-red'};
+    document.getElementById('reqTable').innerHTML=data.map(r=>`
+      <tr>
+        <td class="font-mono" style="color:var(--muted)">#${r.id}</td>
+        <td style="font-weight:500">${r.customer}</td>
+        <td><span class="badge ${r.type==='fuel_delivery'?'badge-pending':'badge-blue'}">${r.type==='fuel_delivery'?'⛽ Fuel':'🔧 Mechanic'}</span></td>
+        <td style="color:var(--muted);font-size:0.78rem">${r.address}</td>
+        <td>${r.provider}</td>
+        <td class="font-mono" style="color:var(--amber)">${r.eta}m</td>
+        <td class="font-mono" style="color:var(--green)">${r.price}</td>
+        <td><span class="badge ${sb[r.status]||'badge-done'}">${r.status.replace('_',' ')}</span></td>
+        <td><button class="action-btn success" onclick="acceptReq(${r.id})">✓ Accept</button><button class="action-btn danger" onclick="cancelReq(${r.id})">✕ Cancel</button></td>
+      </tr>`).join('');
+    const pending=demoReqs.filter(r=>r.status==='pending').length;
+    document.getElementById('pendingBadge').textContent=pending;
+  }
+  function acceptReq(id){const r=demoReqs.find(r=>r.id===id);if(r){r.status='accepted';loadRequests();}showToast('success','✅ Accepted',`Request #${id} accepted.`);}
+  function cancelReq(id){const r=demoReqs.find(r=>r.id===id);if(r){r.status='cancelled';loadRequests();}showToast('warning','✕ Cancelled',`Request #${id} cancelled.`);}
+
+  function loadUsers(){
+    const rb={customer:'badge-blue',mechanic:'badge-active',fuel_station:'badge-pending'};
+    const colors=['#f59e0b','#3b82f6','#22c55e','#8b5cf6','#ef4444'];
+    document.getElementById('usersTable').innerHTML=demoUsers.map((u,i)=>`
+      <tr>
+        <td><div style="display:flex;align-items:center;gap:0.7rem"><div class="avatar" style="background:${colors[i%5]}">${u.name.split(' ').map(n=>n[0]).join('')}</div><span style="font-weight:500">${u.name}</span></div></td>
+        <td style="color:var(--muted);font-size:0.8rem">${u.email}</td>
+        <td style="color:var(--muted);font-size:0.8rem">${u.phone}</td>
+        <td><span class="badge ${rb[u.role]||'badge-done'}">${u.role.replace('_',' ')}</span></td>
+        <td style="color:var(--muted);font-size:0.78rem">${u.joined}</td>
+        <td><span class="badge ${u.active?'badge-active':'badge-red'}">${u.active?'Active':'Suspended'}</span></td>
+        <td><button class="action-btn" onclick="showToast('info','👤 User','Viewing ${u.name}')">View</button><button class="action-btn danger" onclick="showToast('warning','⚠️ Action','User status toggled.')">${u.active?'Suspend':'Activate'}</button></td>
+      </tr>`).join('');
+  }
+
+  function loadProviders(){
+    document.getElementById('providersTable').innerHTML=demoProviders.map(p=>`
+      <tr>
+        <td style="font-weight:500">${p.name}</td>
+        <td><span class="badge ${p.type==='mechanic'?'badge-blue':'badge-pending'}">${p.type==='mechanic'?'🔧 Mechanic':'⛽ Fuel'}</span></td>
+        <td class="font-mono" style="color:var(--muted);font-size:0.75rem">${p.license}</td>
+        <td><span class="ml-score-pill">${p.score}/100</span></td>
+        <td style="color:var(--amber)">★ ${p.rating}</td>
+        <td style="color:var(--muted)">${p.rescues}</td>
+        <td><span class="badge ${p.approved?'badge-active':'badge-pending'}">${p.approved?'Approved':'Pending'}</span></td>
+        <td>
+          ${!p.approved?`<button class="action-btn success" onclick="approveProvider('${p.name}')">Approve</button>`:''}
+          <button class="action-btn danger" onclick="showToast('warning','🚩 Flagged','${p.name} flagged for review.')">Flag</button>
+        </td>
+      </tr>`).join('');
+  }
+  function approveProvider(name){const p=demoProviders.find(p=>p.name===name);if(p){p.approved=true;loadProviders();}showToast('success','✅ Approved',`${name} is now live.`);}
+
+  function loadML(){
+    const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],h=[35,52,68,45,100,72,30];
+    document.getElementById('demandChart').innerHTML=days.map((d,i)=>`<div class="bar" style="height:${h[i]}%;${d==='Fri'?'background:linear-gradient(to top,var(--amber),rgba(245,158,11,0.6))':''}" title="${d}:${h[i]}%"></div>`).join('');
+    document.getElementById('demandLabels').innerHTML=days.map((d,i)=>`<div class="bar-lbl" style="${d==='Fri'?'color:var(--amber)':''}">${d}${d==='Fri'?' ↑':''}</div>`).join('');
+    document.getElementById('mlTable').innerHTML=mlModels.map(m=>`
+      <tr>
+        <td style="font-weight:500">${m.name}</td>
+        <td class="font-mono" style="color:var(--muted);font-size:0.75rem">${m.algo}</td>
+        <td><span class="ml-score-pill">${m.acc}</span></td>
+        <td style="color:var(--muted);font-size:0.78rem">${m.trained}</td>
+        <td><span class="badge badge-active">● Live</span></td>
+      </tr>`).join('');
+  }
+
+  function loadFraud(){
+    const sv={high:'badge-red',medium:'badge-pending',low:'badge-done'};
+    const ss={open:'badge-red',under_review:'badge-pending',resolved:'badge-done'};
+    document.getElementById('fraudTable').innerHTML=demoFraud.map(f=>`
+      <tr>
+        <td style="font-weight:500">${f.provider}</td>
+        <td class="font-mono" style="color:var(--muted);font-size:0.75rem">${f.type.replace('_',' ')}</td>
+        <td style="font-size:0.8rem;color:var(--muted)">${f.desc}</td>
+        <td><span class="badge ${sv[f.severity]}">${f.severity}</span></td>
+        <td style="color:var(--muted);font-size:0.78rem">${f.date}</td>
+        <td><span class="badge ${ss[f.status]||'badge-done'}">${f.status.replace('_',' ')}</span></td>
+        <td><button class="action-btn danger" onclick="showToast('warning','🚫 Suspended','Provider suspended.')">Suspend</button><button class="action-btn success" onclick="showToast('success','✅ Resolved','Case resolved.')">Resolve</button></td>
+      </tr>`).join('');
+  }
+
+  function loadPayments(){
+    const sb={completed:'badge-active',pending:'badge-pending',failed:'badge-red'};
+    document.getElementById('paymentsTable').innerHTML=demoPayments.map(p=>`
+      <tr>
+        <td class="font-mono" style="color:var(--amber);font-size:0.78rem">${p.id}</td>
+        <td style="font-weight:500">${p.customer}</td>
+        <td style="color:var(--muted)">${p.provider}</td>
+        <td class="font-mono" style="color:var(--green)">${p.amount}</td>
+        <td><span class="badge badge-blue">${p.method}</span></td>
+        <td style="color:var(--muted);font-size:0.78rem">${p.date}</td>
+        <td><span class="badge ${sb[p.status]||'badge-done'}">${p.status}</span></td>
+      </tr>`).join('');
+  }
+
+  function initDashboard(){
+    const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],h=[28,45,62,38,88,55,22];
+    document.getElementById('reqChart').innerHTML=days.map((d,i)=>`<div class="bar" style="height:${h[i]}%" title="${d}:${h[i]}"></div>`).join('');
+    document.getElementById('reqLabels').innerHTML=days.map(d=>`<div class="bar-lbl">${d}</div>`).join('');
+    const pending=demoReqs.filter(r=>r.status==='pending');
+    document.getElementById('pendingBadge').textContent=pending.length;
+    document.getElementById('pendingList').innerHTML=pending.map(r=>`
+      <div style="display:flex;align-items:center;gap:1rem;padding:0.8rem 1.2rem;border-bottom:1px solid var(--border)">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">${r.type==='fuel_delivery'?'⛽':'🔧'}</div>
+        <div style="flex:1"><div style="font-weight:500;font-size:0.85rem">${r.customer}</div><div style="font-size:0.75rem;color:var(--muted)">${r.address} · ETA: ${r.eta} min</div></div>
+        <span class="badge badge-pending">PENDING</span>
+        <button class="action-btn success" onclick="acceptReq(${r.id})">Accept</button>
+      </div>`).join('')||'<div style="padding:1.2rem;color:var(--muted);font-size:0.85rem">No pending requests ✅</div>';
+    const acts=['🆘 New request from Alex Johnson — Fuel Delivery','✅ Request #198 completed by Chukwudi Auto','👤 New user registered: Blessing Adeyemi','🛡️ Fraud alert: FastFix Lagos — overcharging','🤖 RL model retrained with 200 new rescues','💳 Payment received: ₦5,500 from Amina Bello'];
+    document.getElementById('activityList').innerHTML=acts.map((a,i)=>`<div style="display:flex;align-items:center;gap:0.8rem;padding:0.7rem 1.2rem;border-bottom:1px solid ${i<acts.length-1?'var(--border)':'transparent'}"><div style="width:6px;height:6px;border-radius:50%;background:var(--amber);flex-shrink:0"></div><span style="font-size:0.82rem">${a}</span><span style="margin-left:auto;font-size:0.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${i===0?'just now':i+'h ago'}</span></div>`).join('');
+  }
+
+  const broadcasts=[
+    {title:'Peak Hour Alert',msg:'High demand expected Friday evening.',time:'2h ago'},
+    {title:'ML Pricing Update',msg:'Dynamic pricing — rates 15% below peak.',time:'1d ago'},
+  ];
+  function renderBroadcasts(){
+    document.getElementById('broadcastLog').innerHTML=broadcasts.map(b=>`
+      <div style="padding:0.8rem 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;font-size:0.82rem">${b.title}</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem">${b.msg}</div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:0.3rem;font-family:'JetBrains Mono',monospace">${b.time}</div>
+      </div>`).join('');
+  }
+
+  async function sendNotif(){
+    const title=document.getElementById('notifTitle').value.trim();
+    const msg=document.getElementById('notifMsg').value.trim();
+    if(!title||!msg){showToast('warning','⚠️ Missing','Fill in title and message.');return;}
+    const data=await api('POST','/notifications/broadcast',{title,message:msg,type:document.getElementById('notifType').value});
+    showToast('success','📤 Sent!',data?data.message:'Notification sent to all users.');
+    broadcasts.unshift({title,msg,time:'just now'});
+    renderBroadcasts();
+    document.getElementById('notifTitle').value='';
+    document.getElementById('notifMsg').value='';
+  }
+  function previewNotif(){showToast('info',document.getElementById('notifTitle').value||'Preview',document.getElementById('notifMsg').value||'Message preview');}
+
+  function openAddUser(){
+    document.getElementById('modalTitle').textContent='ADD NEW USER';
+    document.getElementById('modalSub').textContent='Fill in the new user details';
+    document.getElementById('modalBody').innerHTML=`
+      <div class="form-row"><div class="form-group"><label class="form-label">First Name</label><input type="text" placeholder="First Name"/></div><div class="form-group"><label class="form-label">Last Name</label><input type="text" placeholder="Last Name"/></div></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" placeholder="email@example.com"/></div>
+      <div class="form-group"><label class="form-label">Role</label><select><option>Customer</option><option>Mechanic</option><option>Fuel Station</option></select></div>`;
+    document.getElementById('modalConfirmBtn').onclick=()=>{showToast('success','✅ User Added','New user created successfully.');closeModal();};
+    document.getElementById('mainModal').classList.add('open');
+  }
+  function closeModal(){document.getElementById('mainModal').classList.remove('open');}
+
+  function showToast(type,title,msg){
+    const c=document.getElementById('toastContainer');
+    const t=document.createElement('div');
+    t.className=`toast ${type}`;
+    const icons={success:'✅',warning:'⚠️',error:'❌',info:'ℹ️'};
+    t.innerHTML=`<div>${icons[type]||'📢'}</div><div><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+    c.appendChild(t);
+    setTimeout(()=>{t.style.cssText='opacity:0;transform:translateX(20px);transition:all 0.3s';setTimeout(()=>t.remove(),300);},3500);
+  }
+
+  // INIT
+  initDashboard();
+  renderBroadcasts();
+  api('GET','/requests').then(d=>{if(d?.requests){document.getElementById('s-requests').textContent=d.requests.length;document.getElementById('s-completed').textContent=d.requests.filter(r=>r.status==='completed').length;}});
+  setTimeout(()=>showToast('success','🟢 Admin Panel Live','RoadRescue Admin is ready.'),800);
+</script>
+</body>
+</html>
